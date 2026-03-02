@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import heroImage from '../images/guy-library.jpg';
 
 const Hero = () => {
@@ -35,13 +36,15 @@ const Hero = () => {
             <p className="text-lg text-primary md:text-xl mb-8">
               Exclusive student PGs near Manipal University Jaipur
             </p>
-            <motion.button
-              className="bg-white text-primary px-8 py-3 rounded-full font-semibold hover:bg-gray-100 transition duration-300"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Explore Now
-            </motion.button>
+            <Link to="/morepgs">
+              <motion.button
+                className="bg-white text-primary px-8 py-3 rounded-full font-semibold hover:bg-gray-100 hover:scale-105 transition duration-300"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Explore Now
+              </motion.button>
+            </Link>
           </motion.div>
         </div>
       </div>
