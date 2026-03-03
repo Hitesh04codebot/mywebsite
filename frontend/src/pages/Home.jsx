@@ -187,7 +187,7 @@ const Home = () => {
                   </div>
                   <p className="text-sm text-gray-500 mb-2">Gender: {pg.gender}</p>
                   <p className="text-sm text-gray-500 mb-4">Occupancy: {pg.occupancy}</p>
-                  <Link to="/morepgs">
+                  <Link to={`/pg/${pg.id}`}>
                     <button className="w-full bg-blue-600 text-white rounded-lg py-2 hover:bg-blue-700 transition">
                       View Details
                     </button>

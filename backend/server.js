@@ -22,6 +22,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/mujstays'
 app.use('/api/pgs', require('./routes/pgRoutes'));
 app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/bookings', require('./routes/bookings'));
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

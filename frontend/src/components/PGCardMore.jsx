@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 const PGCard = ({ pg }) => {
   return (
     <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl hover:scale-105 transition duration-300">
@@ -15,9 +17,11 @@ const PGCard = ({ pg }) => {
         </div>
         <p className="text-sm text-gray-500 mt-2">Gender: {pg.gender}</p>
         <p className="text-sm text-gray-500">Occupancy: {pg.occupancy}</p>
-        <button className="mt-4 w-full bg-blue-600 text-white rounded-lg py-2 hover:bg-blue-700 transition">
-          View Details
-        </button>
+        <Link to={`/pg/${pg.id}`}>
+          <button className="mt-4 w-full bg-blue-600 text-white rounded-lg py-2 hover:bg-blue-700 transition">
+            View Details
+          </button>
+        </Link>
       </div>
     </div>
   );
