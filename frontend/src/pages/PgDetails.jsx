@@ -87,16 +87,37 @@ const PgDetails = () => {
   const [duration, setDuration] = useState(1);
   const totalPrice = pg.price * duration;
 
-  const handleBook = () => {
+  const handleBooking = () => {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      alert("Please login or sign up first to book this PG.");
+      alert("Please login first to book.");
       navigate("/login");
       return;
     }
 
-    alert("Booking Confirmed Successfully!");
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    const newBooking = {
+      _id: Date.now(),
+      userId: user.id,
+      pgId: pg.id,
+      pgName: pg.name,
+      checkInDate,
+      duration,
+      totalPrice,
+      status: "Confirmed",
+      bookedAt: new Date().toLocaleString()
+    };
+
+    const existingBookings = JSON.parse(localStorage.getItem("bookings")) || [];
+
+    const updatedBookings = [...existingBookings, newBooking];
+
+    localStorage.setItem("bookings", JSON.stringify(updatedBookings));
+
+    alert("Booking Confirmed!");
+    navigate("/dashboard");
   };
 
   const similarPGs = pgs.filter(p =>
@@ -203,7 +224,7 @@ const PgDetails = () => {
                 </div>
                 <p className="text-lg font-bold mb-4">Total: ₹{totalPrice}</p>
                 <button
-                  onClick={handleBook}
+                  onClick={handleBooking}
                   className="w-full py-3 px-4 rounded-lg font-semibold transition bg-blue-600 text-white hover:bg-blue-700"
                 >
                   Book Now

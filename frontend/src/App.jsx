@@ -6,6 +6,7 @@ import Signup from './pages/Signup';
 import MorePGs from './pages/MorePGs';
 import Contact from './pages/Contact';
 import PgDetails from './pages/PgDetails';
+import Dashboard from './pages/Dashboard';
 import Layout from './components/Layout';
 import './index.css';
 
@@ -20,6 +21,7 @@ function App() {
           <Route path="/morepgs" element={<Layout><MorePGs /></Layout>} />
           <Route path="/contact" element={<Layout><Contact /></Layout>} />
           <Route path="/pg/:id" element={<Layout><PgDetails /></Layout>} />
+          <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
         </Routes>
       </Router>
     </AuthProvider>

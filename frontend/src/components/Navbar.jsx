@@ -125,12 +125,21 @@ const Navbar = () => {
           <div className="hidden md:flex space-x-4 items-center relative">
             {isLoggedIn ? (
               <>
-                <button
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="w-10 h-10 rounded-full bg-white border-2 border-blue-500 ring-2 ring-blue-400 hover:ring-4 hover:ring-blue-500 shadow-md hover:shadow-blue-400/50 transition duration-300 cursor-pointer flex items-center justify-center"
-                >
-                  <FiUser className="w-6 h-6 text-blue-500" />
-                </button>
+                {user?.profileImage ? (
+                  <img
+                    src={user.profileImage}
+                    alt="Profile"
+                    className="w-10 h-10 rounded-full object-cover cursor-pointer border-2 border-blue-500 ring-2 ring-blue-400 hover:ring-4 hover:ring-blue-500 shadow-md hover:shadow-blue-400/50 transition duration-300"
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                  />
+                ) : (
+                  <button
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    className="w-10 h-10 rounded-full bg-white border-2 border-blue-500 ring-2 ring-blue-400 hover:ring-4 hover:ring-blue-500 shadow-md hover:shadow-blue-400/50 transition duration-300 cursor-pointer flex items-center justify-center"
+                  >
+                    <FiUser className="w-6 h-6 text-blue-500" />
+                  </button>
+                )}
                 {dropdownOpen && (
   <div
     ref={dropdownRef}

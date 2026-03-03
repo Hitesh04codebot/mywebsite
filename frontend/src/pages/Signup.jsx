@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
 const images = [
   'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&h=600&fit=crop',
@@ -16,6 +17,7 @@ const Signup = () => {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { setUser } = useAuth();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -41,7 +43,7 @@ const Signup = () => {
     setLoading(true);
     try {
       const { firstName, lastName, email, password } = formData;
-      const dataToSend = { name: `${firstName} ${lastName}`, email, password };
+      const dataToSend = { _id: Date.now().toString(), name: `${firstName} ${lastName}`, email, password };
       const response = await fetch('http://localhost:5000/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -49,9 +51,16 @@ const Signup = () => {
       });
       const data = await response.json();
       if (response.ok) {
+        const userData = {
+          id: data.user._id,
+          name: data.user.name,
+          email: data.user.email,
+          profileImage: data.user.profileImage || null
+        };
         localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        navigate('/');
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+        navigate('/dashboard');
       } else {
         alert(data.message || 'Signup failed');
       }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
 const images = [
   'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&h=600&fit=crop',
@@ -15,6 +16,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { setUser } = useAuth();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -38,9 +40,16 @@ const Login = () => {
       });
       const data = await response.json();
       if (response.ok) {
+        const userData = {
+          id: data.user._id,
+          name: data.user.name,
+          email: data.user.email,
+          profileImage: data.user.profileImage || null
+        };
         localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        navigate('/');
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+        navigate('/dashboard');
       } else {
         alert(data.message || 'Login failed');
       }
