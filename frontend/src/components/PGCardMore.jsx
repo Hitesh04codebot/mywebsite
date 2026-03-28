@@ -17,7 +17,7 @@ const PGCard = ({ pg }) => {
         </div>
         <p className="text-sm text-gray-500 mt-2">Gender: {pg.gender}</p>
         <p className="text-sm text-gray-500">Occupancy: {pg.occupancy}</p>
-        <Link to={`/pg/${pg.id}`}>
+        <Link to={`/pg/${pg._id}`}>
           <button className="mt-4 w-full bg-blue-600 text-white rounded-lg py-2 hover:bg-blue-700 transition">
             View Details
           </button>

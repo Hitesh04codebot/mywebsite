@@ -1,134 +1,102 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import axios from 'axios';
 import PGCard from '../components/PGCardMore';
-
-const pgs = [
-  {
-    id: 1,
-    name: "Blue Heaven PG",
-    price: 8000,
-    location: "Near MUJ Gate 2",
-    image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400&h=250&fit=crop",
-    gender: "Boys",
-    occupancy: "Double",
-    amenities: ["WiFi", "AC"],
-    rating: 4.6
-  },
-  {
-    id: 2,
-    name: "Green Valley PG",
-    price: 7000,
-    location: "Near Campus",
-    image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=400&h=250&fit=crop",
-    gender: "Girls",
-    occupancy: "Single",
-    amenities: ["WiFi", "Food Included"],
-    rating: 4.4
-  },
-  {
-    id: 3,
-    name: "Sunrise Hostel",
-    price: 6000,
-    location: "Downtown Area",
-    image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=250&fit=crop",
-    gender: "Co-Living",
-    occupancy: "Triple",
-    amenities: ["Parking", "Laundry"],
-    rating: 4.2
-  },
-  {
-    id: 4,
-    name: "Comfort Zone PG",
-    price: 9000,
-    location: "Near Shopping Mall",
-    image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400&h=250&fit=crop",
-    gender: "Boys",
-    occupancy: "Single",
-    amenities: ["WiFi", "AC", "Food Included"],
-    rating: 4.8
-  },
-  {
-    id: 5,
-    name: "Elite Living PG",
-    price: 10000,
-    location: "Prime Location",
-    image: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=250&fit=crop",
-    gender: "Girls",
-    occupancy: "Double",
-    amenities: ["WiFi", "AC", "Parking"],
-    rating: 5.0
-  },
-  {
-    id: 6,
-    name: "Budget Stay PG",
-    price: 5500,
-    location: "Suburban Area",
-    image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400&h=250&fit=crop",
-    gender: "Co-Living",
-    occupancy: "Triple",
-    amenities: ["WiFi", "Laundry"],
-    rating: 4.0
-  }
-];
+import { useAuth } from '../context/AuthContext';
 
 const PgDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const pg = pgs.find(p => p.id == id);
+  const { token } = useAuth();
 
-  if (!pg) {
-    return <div className="min-h-screen bg-slate-50 py-16"><p>PG not found</p></div>;
-  }
-
-  const [selectedImage, setSelectedImage] = useState(pg.image);
-  const images = [pg.image, pg.image, pg.image]; // Placeholder for multiple images
+  const [pg, setPg] = useState(null);
+  const [allPGs, setAllPGs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+  const [selectedImage, setSelectedImage] = useState('');
   const [checkInDate, setCheckInDate] = useState('');
   const [duration, setDuration] = useState(1);
-  const totalPrice = pg.price * duration;
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [bookingError, setBookingError] = useState(null);
 
-  const handleBooking = () => {
-    const token = localStorage.getItem("token");
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      axios.get(`http://localhost:5000/api/pgs/${id}`),
+      axios.get('http://localhost:5000/api/pgs'),
+    ])
+      .then(([pgRes, allRes]) => {
+        setPg(pgRes.data);
+        setSelectedImage(pgRes.data.image);
+        setAllPGs(allRes.data);
+      })
+      .catch((err) => {
+        if (err.response?.status === 404) setNotFound(true);
+      })
+      .finally(() => setLoading(false));
+  }, [id]);
 
+  const totalPrice = pg ? pg.price * duration : 0;
+
+  const handleBooking = async () => {
     if (!token) {
-      alert("Please login first to book.");
-      navigate("/login");
+      alert('Please login first to book.');
+      navigate('/login');
       return;
     }
-
-    const user = JSON.parse(localStorage.getItem("user"));
-
-    const newBooking = {
-      _id: Date.now(),
-      userId: user.id,
-      pgId: pg.id,
-      pgName: pg.name,
-      checkInDate,
-      duration,
-      totalPrice,
-      status: "Confirmed",
-      bookedAt: new Date().toLocaleString()
-    };
-
-    const existingBookings = JSON.parse(localStorage.getItem("bookings")) || [];
-
-    const updatedBookings = [...existingBookings, newBooking];
-
-    localStorage.setItem("bookings", JSON.stringify(updatedBookings));
-
-    alert("Booking Confirmed!");
-    navigate("/dashboard");
+    if (!checkInDate) {
+      alert('Please select a check-in date.');
+      return;
+    }
+    setBookingLoading(true);
+    setBookingError(null);
+    try {
+      await axios.post(
+        'http://localhost:5000/api/bookings',
+        { pgId: pg._id, checkInDate, duration, totalPrice },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      navigate('/dashboard');
+    } catch (err) {
+      setBookingError(err.response?.data?.message || 'Booking failed. Please try again.');
+    } finally {
+      setBookingLoading(false);
+    }
   };
 
-  const similarPGs = pgs.filter(p =>
-    p.id != pg.id &&
-    (p.gender === pg.gender || p.occupancy === pg.occupancy || p.amenities.some(a => pg.amenities.includes(a)))
-  ).slice(0, 3);
+  const similarPGs = allPGs
+    .filter(
+      (p) =>
+        p._id !== pg?._id &&
+        (p.gender === pg?.gender ||
+          p.occupancy === pg?.occupancy ||
+          (p.amenities || []).some((a) => (pg?.amenities || []).includes(a)))
+    )
+    .slice(0, 3);
 
   const sectionVariants = {
     hidden: { opacity: 0, y: 50 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.8 } },
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <p className="text-gray-500 text-lg">Loading...</p>
+      </div>
+    );
+  }
+
+  if (notFound || !pg) {
+    return (
+      <div className="min-h-screen bg-slate-50 py-16">
+        <p className="text-center text-gray-600">PG not found.</p>
+      </div>
+    );
+  }
+
+  const images = [pg.image];
 
   return (
     <div className="min-h-screen bg-slate-50 py-16">
@@ -154,7 +122,9 @@ const PgDetails = () => {
                     key={idx}
                     src={img}
                     alt={`Thumbnail ${idx}`}
-                    className={`w-20 h-20 object-cover rounded cursor-pointer ${selectedImage === img ? 'ring-2 ring-blue-500' : ''}`}
+                    className={`w-20 h-20 object-cover rounded cursor-pointer ${
+                      selectedImage === img ? 'ring-2 ring-blue-500' : ''
+                    }`}
                     onClick={() => setSelectedImage(img)}
                   />
                 ))}
@@ -171,12 +141,15 @@ const PgDetails = () => {
                 <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded">Occupancy: {pg.occupancy}</span>
               </div>
               <div className="flex flex-wrap gap-2 mb-6">
-                {pg.amenities.map(amenity => (
-                  <span key={amenity} className="bg-blue-100 text-blue-800 px-3 py-1 rounded text-sm">{amenity}</span>
+                {(pg.amenities || []).map((amenity) => (
+                  <span key={amenity} className="bg-blue-100 text-blue-800 px-3 py-1 rounded text-sm">
+                    {amenity}
+                  </span>
                 ))}
               </div>
               <p className="text-gray-700 mb-4">
-                This PG offers a comfortable living environment with modern amenities and convenient location near MUJ campus. Perfect for students looking for a home away from home.
+                This PG offers a comfortable living environment with modern amenities and convenient
+                location near MUJ campus. Perfect for students looking for a home away from home.
               </p>
               <h3 className="text-xl font-semibold mb-2">House Rules:</h3>
               <ul className="list-disc list-inside text-gray-700">
@@ -188,14 +161,16 @@ const PgDetails = () => {
             </div>
 
             {/* Similar PGs */}
-            <div className="mt-12">
-              <h2 className="text-3xl font-bold text-center mb-8">Similar PGs For You</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {similarPGs.map(similarPg => (
-                  <PGCard key={similarPg.id} pg={similarPg} />
-                ))}
+            {similarPGs.length > 0 && (
+              <div className="mt-12">
+                <h2 className="text-3xl font-bold text-center mb-8">Similar PGs For You</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {similarPGs.map((similarPg) => (
+                    <PGCard key={similarPg._id} pg={similarPg} />
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           <div className="w-full lg:w-1/3">
@@ -223,11 +198,15 @@ const PgDetails = () => {
                   />
                 </div>
                 <p className="text-lg font-bold mb-4">Total: ₹{totalPrice}</p>
+                {bookingError && (
+                  <p className="text-red-500 text-sm mb-3">{bookingError}</p>
+                )}
                 <button
                   onClick={handleBooking}
-                  className="w-full py-3 px-4 rounded-lg font-semibold transition bg-blue-600 text-white hover:bg-blue-700"
+                  disabled={bookingLoading}
+                  className="w-full py-3 px-4 rounded-lg font-semibold transition bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
                 >
-                  Book Now
+                  {bookingLoading ? 'Booking...' : 'Book Now'}
                 </button>
               </div>
             </div>

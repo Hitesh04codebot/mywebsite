@@ -17,7 +17,7 @@ const Signup = () => {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const { login } = useAuth();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -43,7 +43,7 @@ const Signup = () => {
     setLoading(true);
     try {
       const { firstName, lastName, email, password } = formData;
-      const dataToSend = { _id: Date.now().toString(), name: `${firstName} ${lastName}`, email, password };
+      const dataToSend = { name: `${firstName} ${lastName}`, email, password };
       const response = await fetch('http://localhost:5000/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -52,14 +52,11 @@ const Signup = () => {
       const data = await response.json();
       if (response.ok) {
         const userData = {
-          id: data.user._id,
+          id: data.user.id,
           name: data.user.name,
           email: data.user.email,
-          profileImage: data.user.profileImage || null
         };
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(userData));
-        setUser(userData);
+        login(data.token, userData);
         navigate('/dashboard');
       } else {
         alert(data.message || 'Signup failed');

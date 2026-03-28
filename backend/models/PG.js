@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const pgSchema = new mongoose.Schema({
-  title: {
+  name: {
     type: String,
     required: true,
   },
@@ -22,6 +22,20 @@ const pgSchema = new mongoose.Schema({
   image: {
     type: String,
     required: true,
+  },
+  gender: {
+    type: String,
+    enum: ['Boys', 'Girls', 'Co-Living'],
+    required: true,
+  },
+  occupancy: {
+    type: String,
+    enum: ['Single', 'Double', 'Triple'],
+    required: true,
+  },
+  amenities: {
+    type: [String],
+    default: [],
   },
 });
 

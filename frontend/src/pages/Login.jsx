@@ -16,7 +16,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const { login } = useAuth();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -41,14 +41,11 @@ const Login = () => {
       const data = await response.json();
       if (response.ok) {
         const userData = {
-          id: data.user._id,
+          id: data.user.id,
           name: data.user.name,
           email: data.user.email,
-          profileImage: data.user.profileImage || null
         };
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(userData));
-        setUser(userData);
+        login(data.token, userData);
         navigate('/dashboard');
       } else {
         alert(data.message || 'Login failed');

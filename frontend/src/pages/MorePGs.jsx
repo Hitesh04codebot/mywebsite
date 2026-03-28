@@ -1,117 +1,56 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import PGCard from '../components/PGCardMore';
 
-const pgs = [
-  {
-    id: 1,
-    name: "Blue Heaven PG",
-    price: 8000,
-    location: "Near MUJ Gate 2",
-    image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400&h=250&fit=crop",
-    gender: "Boys",
-    occupancy: "Double",
-    amenities: ["WiFi", "AC"],
-    rating: 4.6
-  },
-  {
-    id: 2,
-    name: "Green Valley PG",
-    price: 7000,
-    location: "Near Campus",
-    image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=400&h=250&fit=crop",
-    gender: "Girls",
-    occupancy: "Single",
-    amenities: ["WiFi", "Food Included"],
-    rating: 4.4
-  },
-  {
-    id: 3,
-    name: "Sunrise Hostel",
-    price: 6000,
-    location: "Downtown Area",
-    image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=250&fit=crop",
-    gender: "Co-Living",
-    occupancy: "Triple",
-    amenities: ["Parking", "Laundry"],
-    rating: 4.2
-  },
-  {
-    id: 4,
-    name: "Comfort Zone PG",
-    price: 9000,
-    location: "Near Shopping Mall",
-    image: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400&h=250&fit=crop",
-    gender: "Boys",
-    occupancy: "Single",
-    amenities: ["WiFi", "AC", "Food Included"],
-    rating: 4.8
-  },
-  {
-    id: 5,
-    name: "Elite Living PG",
-    price: 10000,
-    location: "Prime Location",
-    image: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=250&fit=crop",
-    gender: "Girls",
-    occupancy: "Double",
-    amenities: ["WiFi", "AC", "Parking"],
-    rating: 5.0
-  },
-  {
-    id: 6,
-    name: "Budget Stay PG",
-    price: 5500,
-    location: "Suburban Area",
-    image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=400&h=250&fit=crop",
-    gender: "Co-Living",
-    occupancy: "Triple",
-    amenities: ["WiFi", "Laundry"],
-    rating: 4.0
-  }
-];
-
 const MorePGs = () => {
+  const [allPGs, setAllPGs] = useState([]);
   const [priceMin, setPriceMin] = useState(2000);
   const [priceMax, setPriceMax] = useState(15000);
   const [selectedAmenities, setSelectedAmenities] = useState([]);
   const [selectedOccupancy, setSelectedOccupancy] = useState([]);
   const [selectedGender, setSelectedGender] = useState([]);
 
+  useEffect(() => {
+    axios.get('http://localhost:5000/api/pgs').then((res) => setAllPGs(res.data));
+  }, []);
+
   const handleAmenityChange = (amenity) => {
-    setSelectedAmenities(prev =>
-      prev.includes(amenity)
-        ? prev.filter(a => a !== amenity)
-        : [...prev, amenity]
+    setSelectedAmenities((prev) =>
+      prev.includes(amenity) ? prev.filter((a) => a !== amenity) : [...prev, amenity]
     );
   };
 
   const handleOccupancyChange = (occ) => {
-    setSelectedOccupancy(prev =>
-      prev.includes(occ)
-        ? prev.filter(o => o !== occ)
-        : [...prev, occ]
+    setSelectedOccupancy((prev) =>
+      prev.includes(occ) ? prev.filter((o) => o !== occ) : [...prev, occ]
     );
   };
 
   const handleGenderChange = (gen) => {
-    setSelectedGender(prev =>
-      prev.includes(gen)
-        ? prev.filter(g => g !== gen)
-        : [...prev, gen]
+    setSelectedGender((prev) =>
+      prev.includes(gen) ? prev.filter((g) => g !== gen) : [...prev, gen]
     );
   };
 
-  const filteredPGs = pgs.filter(pg =>
-    pg.price >= priceMin &&
-    pg.price <= priceMax &&
-    (selectedAmenities.length === 0 || selectedAmenities.every(amenity => pg.amenities.includes(amenity))) &&
-    (selectedOccupancy.length === 0 || selectedOccupancy.includes(pg.occupancy)) &&
-    (selectedGender.length === 0 || selectedGender.includes(pg.gender))
+  const filteredPGs = allPGs.filter(
+    (pg) =>
+      pg.price >= priceMin &&
+      pg.price <= priceMax &&
+      (selectedAmenities.length === 0 ||
+        selectedAmenities.every((a) => (pg.amenities || []).includes(a))) &&
+      (selectedOccupancy.length === 0 || selectedOccupancy.includes(pg.occupancy)) &&
+      (selectedGender.length === 0 || selectedGender.includes(pg.gender))
   );
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <section className="relative h-80 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=1200&h=400&fit=crop')" }}>
+      <section
+        className="relative h-80 bg-cover bg-center"
+        style={{
+          backgroundImage:
+            "url('https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=1200&h=400&fit=crop')",
+        }}
+      >
         <div className="absolute inset-0 bg-black bg-opacity-40"></div>
         <div className="relative z-10 flex items-center justify-center h-full">
           <h1 className="text-4xl font-bold text-white text-center py-2.5">Find Your Perfect PG</h1>
@@ -152,7 +91,7 @@ const MorePGs = () => {
             {/* Amenities */}
             <div className="mb-6">
               <label className="block text-sm font-medium mb-2">Amenities</label>
-              {['WiFi', 'AC', 'Food Included', 'Parking', 'Laundry'].map(amenity => (
+              {['WiFi', 'AC', 'Food Included', 'Parking', 'Laundry'].map((amenity) => (
                 <label key={amenity} className="flex items-center mb-2">
                   <input
                     type="checkbox"
@@ -168,7 +107,7 @@ const MorePGs = () => {
             {/* Occupancy */}
             <div className="mb-6">
               <label className="block text-sm font-medium mb-2">Occupancy</label>
-              {['Single', 'Double', 'Triple'].map(occ => (
+              {['Single', 'Double', 'Triple'].map((occ) => (
                 <label key={occ} className="flex items-center mb-2">
                   <input
                     type="checkbox"
@@ -184,7 +123,7 @@ const MorePGs = () => {
             {/* Gender */}
             <div className="mb-6">
               <label className="block text-sm font-medium mb-2">Gender</label>
-              {['Boys', 'Girls', 'Co-Living'].map(gen => (
+              {['Boys', 'Girls', 'Co-Living'].map((gen) => (
                 <label key={gen} className="flex items-center mb-2">
                   <input
                     type="checkbox"
@@ -202,8 +141,8 @@ const MorePGs = () => {
         {/* PG Cards Grid */}
         <div className="w-full md:w-3/4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPGs.map(pg => (
-              <PGCard key={pg.id} pg={pg} />
+            {filteredPGs.map((pg) => (
+              <PGCard key={pg._id} pg={pg} />
             ))}
           </div>
         </div>

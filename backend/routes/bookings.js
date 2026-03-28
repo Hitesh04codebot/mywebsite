@@ -1,33 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const Booking = require('../models/Booking');
-const jwt = require('jsonwebtoken');
-
-// Middleware to verify JWT token
-const auth = (req, res, next) => {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
-  if (!token) return res.status(401).json({ message: 'No token provided' });
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = decoded.id;
-    next();
-  } catch (err) {
-    res.status(401).json({ message: 'Invalid token' });
-  }
-};
+const authMiddleware = require('../middleware/authMiddleware');
 
 // POST /api/bookings - Create a new booking
-router.post('/', auth, async (req, res) => {
+router.post('/', authMiddleware, async (req, res) => {
   try {
     const { pgId, checkInDate, duration, totalPrice } = req.body;
 
     const booking = new Booking({
-      user: req.userId,
+      user: req.user._id,
       pg: pgId,
       checkInDate,
       duration,
-      totalPrice
+      totalPrice,
     });
 
     await booking.save();
@@ -37,15 +23,28 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// GET /api/bookings/user/:id - Get bookings for a user
-router.get('/user/:id', auth, async (req, res) => {
+// GET /api/bookings - Get all bookings for the authenticated user
+router.get('/', authMiddleware, async (req, res) => {
   try {
-    if (req.userId != req.params.id) {
-      return res.status(403).json({ message: 'Not authorized to view these bookings' });
-    }
-
-    const bookings = await Booking.find({ user: req.params.id }).populate('pg');
+    const bookings = await Booking.find({ user: req.user._id }).populate('pg');
     res.json(bookings);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// DELETE /api/bookings/:id - Delete a booking (only owner can delete)
+router.delete('/:id', authMiddleware, async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+    if (booking.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to delete this booking' });
+    }
+    await booking.deleteOne();
+    res.json({ message: 'Booking cancelled successfully' });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }

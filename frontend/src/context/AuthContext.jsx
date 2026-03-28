@@ -18,29 +18,39 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-      // Optionally verify token with /me
+    if (storedToken) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
+      // Verify token and hydrate user state from backend
+      axios
+        .get('http://localhost:5000/api/auth/me')
+        .then((res) => {
+          setToken(storedToken);
+          setUser(res.data.user);
+        })
+        .catch(() => {
+          // Token invalid or expired — clear it
+          localStorage.removeItem('token');
+          delete axios.defaults.headers.common['Authorization'];
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
-  const login = (token, userData) => {
-    setToken(token);
+  const login = (newToken, userData) => {
+    setToken(newToken);
     setUser(userData);
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    localStorage.setItem('token', newToken);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
   };
 
   const logout = () => {
     setToken(null);
     setUser(null);
     localStorage.removeItem('token');
-    localStorage.removeItem('user');
     delete axios.defaults.headers.common['Authorization'];
   };
 

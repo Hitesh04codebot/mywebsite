@@ -7,8 +7,6 @@ import { FiUser, FiLogOut, FiLayout } from 'react-icons/fi';
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
@@ -20,11 +18,6 @@ const Navbar = () => {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    setIsLoggedIn(!!token);
   }, []);
 
   useEffect(() => {
@@ -123,7 +116,7 @@ const Navbar = () => {
 
           {/* Desktop Buttons */}
           <div className="hidden md:flex space-x-4 items-center relative">
-            {isLoggedIn ? (
+            {user ? (
               <>
                 {user?.profileImage ? (
                   <img
@@ -156,8 +149,7 @@ const Navbar = () => {
                     <div
                       className="flex items-center px-4 py-2 text-gray-700 hover:bg-red-50 hover:text-red-600 cursor-pointer"
                       onClick={() => {
-                        localStorage.removeItem('token');
-                        setIsLoggedIn(false);
+                        logout();
                         navigate('/');
                         setDropdownOpen(false);
                       }}

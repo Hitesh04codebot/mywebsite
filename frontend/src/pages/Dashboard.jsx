@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaUser } from "react-icons/fa";
+import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 
 const Dashboard = () => {
@@ -8,17 +9,23 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('bookings');
   const [bookings, setBookings] = useState([]);
+  const [bookingsLoading, setBookingsLoading] = useState(true);
+  const [bookingsError, setBookingsError] = useState(null);
 
   useEffect(() => {
     if (!user) return;
-
-    const allBookings = JSON.parse(localStorage.getItem("bookings")) || [];
-
-    const userBookings = allBookings.filter(
-      booking => booking.userId === user.id
-    );
-
-    setBookings(userBookings);
+    setBookingsLoading(true);
+    axios
+      .get('http://localhost:5000/api/bookings')
+      .then((res) => {
+        setBookings(res.data);
+      })
+      .catch((err) => {
+        setBookingsError(err.response?.data?.message || 'Failed to load bookings');
+      })
+      .finally(() => {
+        setBookingsLoading(false);
+      });
   }, [user]);
 
   const handleFileChange = (e) => {
@@ -27,40 +34,23 @@ const Dashboard = () => {
       const reader = new FileReader();
       reader.onload = () => {
         const base64 = reader.result;
-        const updatedUser = { ...user, profileImage: base64 };
-        localStorage.setItem('user', JSON.stringify(updatedUser));
-        setUser(updatedUser);
+        setUser({ ...user, profileImage: base64 });
       };
       reader.readAsDataURL(file);
     }
   };
 
   const handleDeleteImage = () => {
-    const updatedUser = {
-      ...user,
-      profileImage: null
-    };
-    setUser(updatedUser);
-    localStorage.setItem("user", JSON.stringify(updatedUser));
+    setUser({ ...user, profileImage: null });
   };
 
-  const handleDeleteBooking = (bookingId) => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    const allBookings = JSON.parse(localStorage.getItem("bookings")) || [];
-
-    // Remove only the selected booking
-    const updatedBookings = allBookings.filter(
-      booking => booking._id !== bookingId
-    );
-
-    localStorage.setItem("bookings", JSON.stringify(updatedBookings));
-
-    // Filter again for current user
-    const userBookings = updatedBookings.filter(
-      booking => booking.userId === user.id
-    );
-
-    setBookings(userBookings);
+  const handleDeleteBooking = async (bookingId) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/bookings/${bookingId}`);
+      setBookings((prev) => prev.filter((b) => b._id !== bookingId));
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to cancel booking');
+    }
   };
 
   if (!user) return null;
@@ -127,35 +117,37 @@ const Dashboard = () => {
             <div className="animate-fadeIn">
               <h1 className="text-3xl font-bold text-gray-800 mb-8">My Bookings</h1>
 
-              {bookings.length === 0 ? (
+              {bookingsLoading ? (
+                <p className="text-gray-500 text-center py-16">Loading bookings...</p>
+              ) : bookingsError ? (
+                <p className="text-red-500 text-center py-16">{bookingsError}</p>
+              ) : bookings.length === 0 ? (
                 <div className="text-center py-16">
                   <img
                     src="https://cdn-icons-png.flaticon.com/512/4076/4076504.png"
                     alt="No bookings"
                     className="w-24 mx-auto mb-4 opacity-60"
                   />
-                  <p className="text-gray-500 text-lg">
-                    You have no bookings yet.
-                  </p>
+                  <p className="text-gray-500 text-lg">You have no bookings yet.</p>
                 </div>
               ) : (
                 <div className="grid gap-6">
                   {bookings.map((booking) => (
                     <div
                       key={booking._id}
-                      onClick={() => navigate(`/pg/${booking.pgId}`)}
+                      onClick={() => navigate(`/pg/${booking.pg?._id}`)}
                       className="bg-white shadow-md rounded-lg p-6 cursor-pointer hover:shadow-lg transition"
                     >
                       <h3 className="text-xl font-semibold text-gray-800">
-                        {booking.pgName}
+                        {booking.pg?.name || 'PG'}
                       </h3>
 
                       <p className="text-gray-600">
-                        Booked On: {booking.bookedAt}
+                        Booked On: {new Date(booking.createdAt).toLocaleString()}
                       </p>
 
                       <p className="text-gray-600">
-                        Check-in: {booking.checkInDate}
+                        Check-in: {new Date(booking.checkInDate).toLocaleDateString()}
                       </p>
 
                       <p className="text-gray-600">
@@ -166,7 +158,7 @@ const Dashboard = () => {
                         Total: ₹{booking.totalPrice}
                       </p>
 
-                      <p className="font-semibold text-green-600">
+                      <p className="font-semibold text-green-600 capitalize">
                         {booking.status}
                       </p>
 
